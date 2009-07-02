@@ -124,7 +124,7 @@ def result(request):
 
                 payment.save()
 
-                webmoney_payment_accepted.send(sender=payment)
+                webmoney_payment_accepted.send(sender=payment.model, payment=payment)
 
         else:
             return HttpResponseNotAllowed(permitted_methods=('POST',))
