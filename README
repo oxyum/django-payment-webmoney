@@ -1,7 +1,5 @@
 WebMoney Merchant Interface support for Django.
 
-BE CAREFUL: This version have many absolutely untested code now!
-
 Sample configuration:
 
     MERCHANT_WM_USE_SIMPLE_PAYMENT = True
