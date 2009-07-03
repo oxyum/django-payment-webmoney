@@ -82,32 +82,29 @@ def result(request):
         form = PaymentNotificationForm(request.POST)
         if form.is_valid():
 
-            payment_no = form.cleaned_data['LMI_PAYMENT_NO']
-            payee_purse = form.cleaned_data['LMI_PAYEE_PURSE']
-            payer_wm = form.cleaned_data['LMI_PAYER_WM']
-            payer_purse = form.cleaned_data['LMI_PAYER_PURSE']
-            amount = form.cleaned_data['LMI_PAYMENT_AMOUNT']
-            mode = form.cleaned_data['LMI_MODE']
-            sys_invs_no = form.cleaned_data['LMI_SYS_INVS_NO']
-            sys_trans_no = form.cleaned_data['LMI_SYS_TRANS_NO']
-            sys_trans_date = form.cleaned_data['LMI_SYS_TRANS_DATE'].strftime('%Y%m%d %H:%M:%S')
-            wm_hash = form.cleaned_data['LMI_HASH']
-
-            key = "%s%s%s%s%s%s%s%s%s%s" % (payee_purse, amount, payment_no, mode, sys_invs_no, sys_trans_no, 
-                                            sys_trans_date, settings.MERCHANT_WM_SECRET_KEY, payer_purse, payer_wm)
+            key = "%s%s%s%s%s%s%s%s%s%s" % (form.cleaned_data['LMI_PAYEE_PURSE'],
+                                            form.cleaned_data['LMI_PAYMENT_AMOUNT'],
+                                            form.cleaned_data['LMI_PAYMENT_NO'],
+                                            form.cleaned_data['LMI_MODE'],
+                                            form.cleaned_data['LMI_SYS_INVS_NO'],
+                                            form.cleaned_data['LMI_SYS_TRANS_NO'], 
+                                            form.cleaned_data['LMI_SYS_TRANS_DATE'].strftime('%Y%m%d %H:%M:%S'),
+                                            settings.MERCHANT_WM_SECRET_KEY,
+                                            form.cleaned_data['LMI_PAYER_PURSE'],
+                                            form.cleaned_data['LMI_PAYER_WM'])
 
             generated_hash = md5(key).hexdigest().upper()
 
-            if generated_hash == wm_hash:
-                payment = Payment(payee_purse=payee_purse,
-                                  amount=amount,
-                                  payment_no=payment_no,
-                                  mode=mode,
-                                  sys_invs_no=sys_invs_no,
-                                  sys_trans_no=sys_trans_no,
-                                  sys_trans_date=sys_trans_date,
-                                  payer_purse=payer_purse,
-                                  payer_wm=payer_wm,
+            if generated_hash == form.cleaned_data['LMI_HASH']:
+                payment = Payment(payee_purse=form.cleaned_data['LMI_PAYEE_PURSE'],
+                                  amount=form.cleaned_data['LMI_PAYMENT_AMOUNT'],
+                                  payment_no=form.cleaned_data['LMI_PAYMENT_NO'],
+                                  mode=form.cleaned_data['LMI_MODE'],
+                                  sys_invs_no=form.cleaned_data['LMI_SYS_INVS_NO'],
+                                  sys_trans_no=form.cleaned_data['LMI_SYS_TRANS_NO'],
+                                  sys_trans_date=form.cleaned_data['LMI_SYS_TRANS_DATE'],
+                                  payer_purse=form.cleaned_data['LMI_PAYER_PURSE'],
+                                  payer_wm=form.cleaned_data['LMI_PAYER_WM'],
                                   paymer_number=form.cleaned_data['LMI_PAYMER_NUMBER'],
                                   paymer_email=form.cleaned_data['LMI_PAYMER_EMAIL'],
                                   telepat_phonenumber=form.cleaned_data['LMI_TELEPAT_PHONENUMBER'],
@@ -115,7 +112,7 @@ def result(request):
                                   payment_creditdays=form.cleaned_data['LMI_PAYMENT_CREDITDAYS']
                                   )
                 try:
-                    invoice = Invoice.objects.get(payment_no=payment_no)
+                    invoice = Invoice.objects.get(payment_no=form.cleaned_data['LMI_PAYMENT_NO'])
                     payment.invoice = invoice
                 except ObjectDoesNotExist:
                     mail_admins('Unprocessed payment without invoice!',
@@ -124,7 +121,7 @@ def result(request):
 
                 payment.save()
 
-                webmoney_payment_accepted.send(sender=payment.model, payment=payment)
+                webmoney_payment_accepted.send(sender=payment.__class__, payment=payment)
 
         else:
             return HttpResponseNotAllowed(permitted_methods=('POST',))
