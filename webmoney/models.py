@@ -56,7 +56,7 @@ class Invoice(models.Model):
         transaction.commit()
 
     def __unicode__(self):
-        return '%s/%s (for: %s)' % (self.payment_no, self.created_on.date() if self.created_on is not None else None, self.user, )
+        return '%s/%s (for: %s)' % (self.payment_no, self.created_on.date(), self.user, )
 
 PAYMENT_MODE_CHOICES = (
     (0, 'REAL'),
