@@ -2,3 +2,6 @@
 *.pyc
 semantic.cache
 .ropeproject/
+/build/
+/dist/
+/django_payment_webmoney.egg-info/
