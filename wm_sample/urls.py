@@ -7,7 +7,8 @@ from views import *
 admin.autodiscover()
 
 urlpatterns = patterns('',
-    (r'^admin/', include(admin.site.urls)),
+    (r'^admin/',    include(admin.site.urls)),
+    (r'^webmoney/', include('webmoney.urls')),
 )
 
 urlpatterns += patterns('',
