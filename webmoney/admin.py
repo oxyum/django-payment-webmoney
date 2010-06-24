@@ -1,5 +1,5 @@
 from django.contrib import admin
-from webmoney.models import Invoice, Payment
+from webmoney.models import Invoice, Payment, Purse
 
 class InvoiceAdmin(admin.ModelAdmin):
     list_display = ['__unicode__', 'payment_no', 'created_on', 'user', '_is_payed_admin']
@@ -18,3 +18,10 @@ class PaymentAdmin(admin.ModelAdmin):
     search_fields = ['id']
 
 admin.site.register(Payment, PaymentAdmin)
+
+class PurseAdmin(admin.ModelAdmin):
+    list_display = ['__unicode__']
+    ordering = ['purse']
+    search_fields = ['purse']
+
+admin.site.register(Purse, PurseAdmin)

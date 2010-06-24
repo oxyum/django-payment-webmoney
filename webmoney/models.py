@@ -5,6 +5,16 @@ from time import sleep
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, models, transaction
 
+import signals
+
+
+class Purse(models.Model):
+    purse = models.CharField(max_length=13, unique=True)
+    secret_key = models.CharField(max_length=50)
+
+    def __unicode__(self):
+        return '%s' % (self.purse, )
+
 class Invoice(models.Model):
     user = models.ForeignKey('auth.User')
     created_on = models.DateTimeField(unique=True, editable=False)
@@ -23,7 +33,7 @@ class Invoice(models.Model):
     is_payed = property(_is_payed_admin)
 
     @transaction.commit_manually
-    def save(self, force_insert=False, force_update=False):
+    def save(self, force_insert=False, force_update=False, using=None):
         sid = transaction.savepoint()
         if self.pk is None:
             i = 1
@@ -68,7 +78,8 @@ class Payment(models.Model):
 
     invoice = models.OneToOneField(Invoice, blank=True, null=True, related_name='payment')
 
-    payee_purse = models.CharField(max_length=13)
+    payee_purse = models.ForeignKey(Purse, related_name='payments')
+
     amount = models.DecimalField(decimal_places=2, max_digits=9)
 
     payment_no = models.PositiveIntegerField(unique=True)
@@ -91,4 +102,4 @@ class Payment(models.Model):
     payment_creditdays = models.PositiveIntegerField(blank=True, null=True)
     
     def __unicode__(self):
-        return "%s - %s WM%s" % (self.payment_no, self.amount, self.payee_purse[0])
+        return "%s - %s WM%s" % (self.payment_no, self.amount, self.payee_purse.purse[0])

@@ -1,22 +1,14 @@
 
 import re
 
-from django.core.exceptions import ImproperlyConfigured
-from django.conf import settings
-
-from webmoney import signals
-
-_err_msg = "You need to specify %s in your Django settings file."
-
-if not hasattr(settings, 'MERCHANT_WM_PAYEE_PURSE'):
-    raise ImproperlyConfigured(_err_msg % 'MERCHANT_WM_PAYEE_PURSE')
-
-if not hasattr(settings, 'MERCHANT_WM_SECRET_KEY'):
-    raise ImproperlyConfigured(_err_msg % 'MERCHANT_WM_SECRET_KEY')
-
-if not getattr(settings, 'MERCHANT_WM_USE_SIMPLE_PAYMENT', False):
-    raise ImproperlyConfigured("Only simple payment mode supported in this version. "
-                               "You must set %s to True." % 'MERCHANT_WM_USE_SIMPLE_PAYMENT')
-
+VERSION = (0, 2, 0, "final")
 PURSE_RE = re.compile(ur'^(?P<type>[ZREUYBGDC])(?P<number>\d{12})$')
 WMID_RE = re.compile(ur'^\d{12}$')
+
+def get_version():
+    if VERSION[3] != "final":
+        return "%s.%s.%s%s" % (VERSION[0], VERSION[1], VERSION[2], VERSION[3])
+    else:
+        return "%s.%s.%s" % (VERSION[0], VERSION[1], VERSION[2])
+
+__version__ = get_version()

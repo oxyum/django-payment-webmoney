@@ -1,7 +1,1 @@
 WebMoney Merchant Interface support for Django.
-
-Sample configuration:
-
-    MERCHANT_WM_USE_SIMPLE_PAYMENT = True
-    MERCHANT_WM_PAYEE_PURSE = 'Z000000000000'
-    MERCHANT_WM_SECRET_KEY = 'My very secret key!'

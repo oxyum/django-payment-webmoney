@@ -1,6 +1,7 @@
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
+
 def render_to(template=None):
     def renderer(function):
         def wrapper(request, *args, **kwargs):

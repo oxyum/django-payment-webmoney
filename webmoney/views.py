@@ -4,66 +4,13 @@ try:
 except ImportError:
     from md5 import md5
 
-from random import choice
-from string import digits
-from decimal import Decimal
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import mail_admins
-from django.utils.translation import ugettext_lazy as _
-from django.http import HttpResponse, HttpResponseNotAllowed
-from django.conf import settings
-from django.template import loader, RequestContext
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed
 
-from django.contrib.auth.decorators import login_required
-
-from webmoney.forms import *
-from webmoney.helpers import render_to
-from webmoney.models import Invoice, Payment
+from webmoney.forms import PrerequestForm, PaymentNotificationForm
+from webmoney.models import Invoice, Payment, Purse
 from webmoney.signals import webmoney_payment_accepted
-
-@login_required
-@render_to('webmoney/simple_payment.html')
-def simple_payment(request):
-    response = {}
-
-    initial = {
-        'LMI_PAYEE_PURSE': settings.MERCHANT_WM_PAYEE_PURSE,
-        'LMI_PAYMENT_NO': Invoice.objects.create(user=request.user).payment_no,
-        'LMI_PAYMENT_DESC': loader.render_to_string('webmoney/simple_payment_desc.txt',
-                                                    RequestContext(request)).strip()[0:255],
-    }
-
-    response['form'] = PaymentRequestForm(initial=initial)
-
-    return response
-
-@render_to('webmoney/success.html')
-def success(request):
-    response = {}
-
-    if request.method == 'POST':
-        form = SettledPaymentForm(request.POST)
-        if form.is_valid():
-            response['id'] = form.cleaned_data['LMI_PAYMENT_NO']
-            response['sys_invs_no'] = form.cleaned_data['LMI_SYS_INVS_NO']
-            response['sys_trans_no'] = form.cleaned_data['LMI_SYS_TRANS_NO']
-            response['date'] = form.cleaned_data['LMI_SYS_TRANS_DATE']
-
-    return response
-
-
-@render_to('webmoney/failure.html')
-def failure(request):
-    response = {}
-    if request.method == 'POST':
-        form = UnSettledPaymentForm(request.POST)
-        if form.is_valid():
-            response['id'] = form.cleaned_data['LMI_PAYMENT_NO']
-            response['sys_invs_no'] = form.cleaned_data['LMI_SYS_INVS_NO']
-            response['sys_trans_no'] = form.cleaned_data['LMI_SYS_TRANS_NO']
-            response['date'] = form.cleaned_data['LMI_SYS_TRANS_DATE']
-    return response
 
 
 def result(request):
@@ -74,29 +21,30 @@ def result(request):
             payment_no = int(form.cleaned_data['LMI_PAYMENT_NO'])
             try:
                 invoice = Invoice.objects.get(payment_no=payment_no)
-                
             except ObjectDoesNotExist:
-                return HttpResponse("Invoice with number %s not found." % payment_no)
+                return HttpResponseBadRequest("Invoice with number %s not found." % payment_no)
             return HttpResponse("YES")
 
         form = PaymentNotificationForm(request.POST)
         if form.is_valid():
 
-            key = "%s%s%s%s%s%s%s%s%s%s" % (form.cleaned_data['LMI_PAYEE_PURSE'],
+            purse = Purse.objects.get(purse=form.cleaned_data['LMI_PAYEE_PURSE'])
+
+            key = "%s%s%s%s%s%s%s%s%s%s" % (purse.purse,
                                             form.cleaned_data['LMI_PAYMENT_AMOUNT'],
                                             form.cleaned_data['LMI_PAYMENT_NO'],
                                             form.cleaned_data['LMI_MODE'],
                                             form.cleaned_data['LMI_SYS_INVS_NO'],
                                             form.cleaned_data['LMI_SYS_TRANS_NO'], 
                                             form.cleaned_data['LMI_SYS_TRANS_DATE'].strftime('%Y%m%d %H:%M:%S'),
-                                            settings.MERCHANT_WM_SECRET_KEY,
+                                            purse.secret_key,
                                             form.cleaned_data['LMI_PAYER_PURSE'],
                                             form.cleaned_data['LMI_PAYER_WM'])
 
             generated_hash = md5(key).hexdigest().upper()
 
             if generated_hash == form.cleaned_data['LMI_HASH']:
-                payment = Payment(payee_purse=form.cleaned_data['LMI_PAYEE_PURSE'],
+                payment = Payment(payee_purse=purse,
                                   amount=form.cleaned_data['LMI_PAYMENT_AMOUNT'],
                                   payment_no=form.cleaned_data['LMI_PAYMENT_NO'],
                                   mode=form.cleaned_data['LMI_MODE'],
@@ -122,7 +70,11 @@ def result(request):
                 payment.save()
 
                 webmoney_payment_accepted.send(sender=payment.__class__, payment=payment)
-
+            else:
+                mail_admins('Unprocessed payment with incorrect hash!',
+                            'Payment NO is %s.' % payment_no,
+                            fail_silently=True)
+                return HttpResponseBadRequest("Incorrect hash")
         else:
             return HttpResponseNotAllowed(permitted_methods=('POST',))
 

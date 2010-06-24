@@ -1,14 +1,14 @@
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
     name='django-payment-webmoney',
-    version='0.1',
+    version=__import__('webmoney').__version__,
     description='WebMoney Merchant Interface support for Django.',
     author='Ivan Fedorov',
     author_email='oxyum@oxyum.ru',
     url='http://code.google.com/p/django-payment-webmoney/',
-    packages=find_packages(),
+    packages=['webmoney',],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',

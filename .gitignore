@@ -5,3 +5,4 @@ semantic.cache
 /build/
 /dist/
 /django_payment_webmoney.egg-info/
+/wm_sample/wm_sample.db
