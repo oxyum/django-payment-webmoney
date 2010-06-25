@@ -7,7 +7,10 @@ except ImportError:
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import mail_admins
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed
-from django.views.decorators.csrf import csrf_exempt
+try:
+    from django.views.decorators.csrf import csrf_exempt
+except ImportError:
+    from django.contrib.csrf.middleware import csrf_exempt
 
 from webmoney.forms import PrerequestForm, PaymentNotificationForm
 from webmoney.models import Invoice, Payment, Purse
