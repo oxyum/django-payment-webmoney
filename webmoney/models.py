@@ -4,8 +4,10 @@ from time import sleep
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, models, transaction
+from django.conf import settings
 
-import signals
+
+AUTH_USER_MODEL = getattr(settings, 'AUTH_USER_MODEL', 'auth.User')
 
 
 class Purse(models.Model):
@@ -16,7 +18,7 @@ class Purse(models.Model):
         return '%s' % (self.purse, )
 
 class Invoice(models.Model):
-    user = models.ForeignKey('auth.User')
+    user = models.ForeignKey(AUTH_USER_MODEL)
     created_on = models.DateTimeField(unique=True, editable=False)
     payment_no = models.PositiveIntegerField(unique=True, editable=False)
 
