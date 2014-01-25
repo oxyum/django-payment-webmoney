@@ -1,4 +1,3 @@
-
 from datetime import datetime, timedelta
 from time import sleep
 
@@ -9,6 +8,11 @@ from django.conf import settings
 
 AUTH_USER_MODEL = getattr(settings, 'AUTH_USER_MODEL', 'auth.User')
 
+PAYMENT_MODE_CHOICES = (
+    (0, 'REAL'),
+    (1, 'TEST'),
+)
+
 
 class Purse(models.Model):
     purse = models.CharField(max_length=13, unique=True)
@@ -16,6 +20,7 @@ class Purse(models.Model):
 
     def __unicode__(self):
         return '%s' % (self.purse, )
+
 
 class Invoice(models.Model):
     user = models.ForeignKey(AUTH_USER_MODEL)
@@ -28,6 +33,7 @@ class Invoice(models.Model):
             return True
         except ObjectDoesNotExist:
             return False
+
     _is_payed_admin.boolean = True
     _is_payed_admin.short_description = 'is payed'
     _is_payed_admin.admin_order_field = 'payment'
@@ -46,15 +52,21 @@ class Invoice(models.Model):
 
                 if i > 20:
                     # Protection from infinite loop
-                    raise IntegrityError('Too many iterations while generating unique Invoice number.')
+                    raise IntegrityError(
+                        'Too many iterations while generating '
+                        'unique Invoice number.'
+                    )
 
                 try:
                     self.created_on = datetime.utcnow()
-                    self.created_on = self.created_on - timedelta(microseconds = self.created_on.microsecond % 100)
+                    self.created_on = self.created_on - timedelta(
+                        microseconds=self.created_on.microsecond % 100)
 
-                    self.payment_no = (self.created_on.hour*3600+
-                                       self.created_on.minute*60+
-                                       self.created_on.second)*10000 + (self.created_on.microsecond // 100)
+                    self.payment_no = (
+                                          self.created_on.hour * 3600 +
+                                          self.created_on.minute * 60 +
+                                          self.created_on.second) * 10000 + (
+                                          self.created_on.microsecond // 100)
                     super(Invoice, self).save(force_insert, force_update)
 
                 except IntegrityError:
@@ -68,24 +80,18 @@ class Invoice(models.Model):
         transaction.commit()
 
     def __unicode__(self):
-        return '%s/%s (for: %s)' % (self.payment_no, self.created_on.date(), self.user, )
+        return '%s/%s (for: %s)' % (
+            self.payment_no, self.created_on.date(), self.user, )
 
-PAYMENT_MODE_CHOICES = (
-    (0, 'REAL'),
-    (1, 'TEST'),
-)
 
 class Payment(models.Model):
     created_on = models.DateTimeField(auto_now_add=True, editable=False)
 
-    invoice = models.OneToOneField(Invoice, blank=True, null=True, related_name='payment')
-
+    invoice = models.OneToOneField(
+        Invoice, blank=True, null=True, related_name='payment')
     payee_purse = models.ForeignKey(Purse, related_name='payments')
-
     amount = models.DecimalField(decimal_places=2, max_digits=9)
-
     payment_no = models.PositiveIntegerField(unique=True)
-
     mode = models.PositiveSmallIntegerField(choices=PAYMENT_MODE_CHOICES)
 
     sys_invs_no = models.PositiveIntegerField()
@@ -102,6 +108,7 @@ class Payment(models.Model):
     telepat_orderid = models.CharField(max_length=30, blank=True)
 
     payment_creditdays = models.PositiveIntegerField(blank=True, null=True)
-    
+
     def __unicode__(self):
-        return "%s - %s WM%s" % (self.payment_no, self.amount, self.payee_purse.purse[0])
+        return "%s - %s WM%s" % (
+            self.payment_no, self.amount, self.payee_purse.purse[0])
