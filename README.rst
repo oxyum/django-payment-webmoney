@@ -13,6 +13,9 @@ How to configure WM
 5. Save & enjoy
 
 Fields urls example for wm-sample:
-    Result URL = http://127.0.0.1:8000/webmoney/result/
-    Success URL = http://127.0.0.1:8000/success/
-    Fail URL = http://127.0.0.1:8000/fail/
+----------------------------------
+* Result URL = http://127.0.0.1:8000/webmoney/result/
+
+* Success URL = http://127.0.0.1:8000/success/
+
+* Fail URL = http://127.0.0.1:8000/fail/
