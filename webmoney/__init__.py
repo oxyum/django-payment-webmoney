@@ -1,6 +1,6 @@
 import re
 
-VERSION = (0, 2, 1, "final")
+VERSION = (0, 3, 0, "final")
 PURSE_RE = re.compile(ur'^(?P<type>[ZREUYBGDC])(?P<number>\d{12})$')
 WMID_RE = re.compile(ur'^\d{12}$')
 
