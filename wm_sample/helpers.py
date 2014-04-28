@@ -9,6 +9,9 @@ def render_to(template=None):
             if not isinstance(output, dict):
                 return output
             tmpl = output.pop('TEMPLATE', template)
-            return render_to_response(tmpl, output, context_instance=RequestContext(request))
+            return render_to_response(
+                tmpl, output, context_instance=RequestContext(request))
+
         return wrapper
+
     return renderer
